@@ -1,0 +1,35 @@
+{
+  "name": "sistemium-sqlanywhere",
+  "version": "1.0.0",
+  "description": "SqlAnywhere async",
+  "main": "lib/Anywhere.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "scripts": {
+    "lint": "eslint lib",
+    "test": "npm run lint"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Sistemium/sistemium-sqlanywhere.git"
+  },
+  "keywords": [
+    "sqlanywhere"
+  ],
+  "author": "Sistemium UAB",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Sistemium/sistemium-sqlanywhere/issues"
+  },
+  "homepage": "https://github.com/Sistemium/sistemium-sqlanywhere#readme",
+  "dependencies": {
+    "sistemium-telegram": "^1.2.10",
+    "sqlanywhere": "^1.0.24"
+  },
+  "devDependencies": {
+    "eslint": "^5.15.2",
+    "eslint-config-airbnb-base": "^13.1.0",
+    "eslint-plugin-import": "^2.16.0"
+  }
+}
