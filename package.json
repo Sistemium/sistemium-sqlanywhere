@@ -8,7 +8,7 @@
   },
   "scripts": {
     "lint": "eslint lib",
-    "test": "npm run lint"
+    "test": "mocha --require esm"
   },
   "repository": {
     "type": "git",
@@ -28,8 +28,13 @@
     "sqlanywhere": "^1.0.24"
   },
   "devDependencies": {
-    "eslint": "^5.15.2",
-    "eslint-config-airbnb-base": "^13.1.0",
-    "eslint-plugin-import": "^2.16.0"
+    "esm": "^3.2.25",
+    "chai": "^4.2.0",
+    "eslint": "^6.1.0",
+    "eslint-config-airbnb-base": "^14.0.0",
+    "eslint-plugin-import": "^2.18.2",
+    "eslint-plugin-mocha": "^6.0.0",
+    "nodemon": "^1.19.1",
+    "mocha": "^6.2.0"
   }
 }
