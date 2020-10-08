@@ -1,15 +1,15 @@
 import { expect, assert } from 'chai';
 import Anywhere from '../lib/Anywhere';
 
-const { SQLC } = process.env;
+const { SQLA_CONNECTION } = process.env;
 
 describe('Anywhere connection', function () {
 
   it('should connect and disconnect', async function () {
 
-    assert(SQLC, 'SQLC env var must be set');
+    assert(SQLA_CONNECTION, 'SQLA_CONNECTION env var must be set');
 
-    const conn = new Anywhere(SQLC);
+    const conn = new Anywhere(SQLA_CONNECTION);
 
     await conn.connect();
 
