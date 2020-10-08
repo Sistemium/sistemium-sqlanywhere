@@ -1,16 +1,13 @@
 import { expect, assert } from 'chai';
 import Anywhere from '../lib/Anywhere';
 
-const SQLC = 'host=asa3a.sistemium.com;eng=AWS03a;dbn=bsd;uid=bsapi;pwd=sqL2019-bs';
+const { SQLC } = process.env;
 
 describe('Anywhere connection', function () {
 
-  // before(async function () {
-  //   assert(process.env.MONGO_URL, 'Must be set MONGO_URL variable');
-  //   await mongo.connect();
-  // });
-
   it('should connect and disconnect', async function () {
+
+    assert(SQLC, 'SQLC env var must be set');
 
     const conn = new Anywhere(SQLC);
 
@@ -23,9 +20,5 @@ describe('Anywhere connection', function () {
     console.log('disconnected');
 
   });
-
-  // after(async function () {
-  //   await mongo.disconnect();
-  // });
 
 });
