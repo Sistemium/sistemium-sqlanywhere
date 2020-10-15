@@ -24,7 +24,7 @@
   },
   "homepage": "https://github.com/Sistemium/sistemium-sqlanywhere#readme",
   "dependencies": {
-    "sistemium-telegram": "^1.2.12",
+    "sistemium-debug": "^1.0.0",
     "sqlanywhere": "^1.0.24"
   },
   "devDependencies": {
