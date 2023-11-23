@@ -10,13 +10,10 @@ describe('Anywhere connection', function () {
     assert(SQLA_CONNECTION, 'SQLA_CONNECTION env var must be set');
 
     const conn = new Anywhere(SQLA_CONNECTION);
-
     await conn.connect();
-
     console.log('connected');
 
     await conn.disconnect();
-
     console.log('disconnected');
 
   });
