@@ -1,11 +1,21 @@
 {
   "include": [
-    "lib/*.js"
+    "src",
   ],
   "compilerOptions": {
-    "allowJs": true,
+    "target": "es2019",
+    "module": "commonjs",
+    "lib": [
+      "es6"
+    ],
+    "allowJs": false,
+    "outDir": "lib",
     "declaration": true,
-    "emitDeclarationOnly": true,
-    "outDir": "types"
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "forceConsistentCasingInFileNames": true,
+    "noUnusedLocals": true
   }
 }
