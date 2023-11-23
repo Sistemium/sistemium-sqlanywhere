@@ -11,6 +11,7 @@ export default class Anywhere {
   connParams?: string;
   private connection: AnywhereConnection = new AnywhereConnection();
   statements: Record<string, any> = {};
+  autoCommit: boolean = false;
 
   constructor(connParams?: string) {
     this.connParams = connParams || SQLA_CONNECTION;
@@ -142,11 +143,15 @@ export default class Anywhere {
       this.connection.execPrepared(preparedId, values, async (err, res) => {
 
         if (!err) {
-          await this.commit();
+          if (this.autoCommit) {
+            await this.commit();
+          }
           resolve(res);
         } else {
           error('exec', err);
-          await this.rollback();
+          if (this.autoCommit) {
+            await this.rollback();
+          }
           reject(err);
         }
 
