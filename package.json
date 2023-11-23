@@ -3,7 +3,6 @@
   "version": "1.4.0",
   "description": "SqlAnywhere async",
   "main": "lib/Anywhere.js",
-  "typings": "./types/Anywhere.d.ts",
   "files": [
     "lib"
   ],
