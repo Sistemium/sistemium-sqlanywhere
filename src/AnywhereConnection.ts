@@ -26,6 +26,7 @@ export default class AnywhereConnection {
     return new Promise<true>((resolve, reject) => {
       this.send('MSG_CONNECT', params, err => {
         if (err) {
+          this.destroy();
           reject(err);
         } else {
           resolve(true);
