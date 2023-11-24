@@ -5,6 +5,9 @@ const { SQLA_CONNECTION } = process.env;
 
 console.log(process.arch, process.env.DYLD_LIBRARY_PATH);
 
+const sqlCount = 'select count() as cnt from #test';
+const sqlInsert = 'insert into #test (id, name) values (?, ?)';
+
 describe('Anywhere connection', function () {
 
   it('should connect and disconnect', async function () {
@@ -15,6 +18,12 @@ describe('Anywhere connection', function () {
     await conn.connect();
     await conn.disconnect();
 
+    await conn.disconnect()
+      .then(unexpected)
+      .catch(e => {
+        expect(e.message).equals('Process disconnected')
+      })
+
   });
 
   it('should utilize prepared', async function () {
@@ -22,15 +31,67 @@ describe('Anywhere connection', function () {
     const conn = new Anywhere(SQLA_CONNECTION);
     await conn.connect();
 
-    await conn.execImmediate('declare local temporary table #test (id int, name text)');
-    const p = await conn.prepare('insert into #test (id, name) values (?, ?)');
+    const sql = 'declare local temporary table #test (id int, name text)';
+
+    await conn.execImmediate(sql);
+    const p = await conn.prepare(sqlInsert);
     await conn.exec(p, [1, 'test 1']);
     await conn.exec(p, [2, 'test 2']);
-    const [{ cnt }] = await conn.execImmediate('select count() as cnt from #test');
+    expect(await conn.dropPrepared(sql)).equals(false, 'must be not prepared');
+    expect(await conn.dropPrepared(sqlInsert)).equals(true, 'must be dropped');
+    const [{ cnt }] = await conn.execImmediate(sqlCount);
     expect(cnt).equals(2);
 
     await conn.disconnect();
 
   });
 
+  it('should rollback', async function () {
+
+    const conn = new Anywhere(SQLA_CONNECTION);
+    await conn.connect();
+
+    const sql = 'declare local temporary table #test (id int, name text) on commit preserve rows';
+
+    await conn.execImmediate(sql);
+    const p = await conn.prepare(sqlInsert);
+    const already = await conn.prepare(sqlInsert);
+    expect(already).equals(p);
+
+    await conn.exec(p, [1, 'to rollback 1']);
+    await conn.rollback();
+    const [{ cnt }] = await conn.execImmediate(sqlCount);
+    expect(cnt).equals(0);
+
+    await conn.exec(p, [1, 'to commit 1']);
+    const [committed] = await conn.execImmediate(sqlCount);
+    await conn.commit();
+    expect(committed).eql({ cnt: 1 });
+
+    await conn.disconnect();
+
+  });
+
+  it('should throw', async function () {
+
+    const conn = new Anywhere(SQLA_CONNECTION);
+    await conn.connect();
+
+    const sql = 'declare local temporary table #test (id int, name text)';
+
+    await conn.execImmediate(sql);
+    await conn.execImmediate('insert into #test1 (id, name) values (1, \'1\')')
+      .then(unexpected)
+      .catch(e => {
+        expect(e.message).equals('Table \'#test1\' not found')
+      });
+
+    await conn.disconnect();
+
+  });
+
 });
+
+function unexpected() {
+  throw Error('Unexpected success')
+}

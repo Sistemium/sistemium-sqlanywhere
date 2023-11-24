@@ -101,7 +101,7 @@ export default class Anywhere {
         if (!err) {
           resolve();
         } else {
-          error('commit', err);
+          error('rollback', err);
           reject(err);
         }
       });
