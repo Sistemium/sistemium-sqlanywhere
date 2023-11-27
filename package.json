@@ -1,6 +1,6 @@
 {
   "name": "sistemium-sqlanywhere",
-  "version": "1.4.1",
+  "version": "1.4.2",
   "description": "SqlAnywhere async",
   "main": "lib/Anywhere.js",
   "files": [
