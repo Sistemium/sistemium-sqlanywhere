@@ -11,7 +11,7 @@ export default class Anywhere {
   connParams?: string;
   private connection: AnywhereConnection = new AnywhereConnection();
   statements: Record<string, any> = {};
-  autoCommit: boolean = false;
+  autoCommit: boolean = true;
 
   constructor(connParams?: string) {
     this.connParams = connParams || SQLA_CONNECTION;

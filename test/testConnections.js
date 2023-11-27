@@ -44,6 +44,7 @@ describe('Anywhere connection', function () {
 
     const conn = new Anywhere(SQLA_CONNECTION);
     await conn.connect();
+    conn.autoCommit = false;
 
     await conn.execImmediate(sqlPrepare);
     const p = await conn.prepare(sqlInsert);
@@ -81,6 +82,7 @@ describe('Anywhere connection', function () {
 
     const conn = new Anywhere(SQLA_CONNECTION);
     await conn.connect();
+    conn.autoCommit = false;
 
     const sql = `${sqlPrepare} on commit preserve rows`;
 
