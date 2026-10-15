@@ -1,5 +1,6 @@
 const { assert, expect } = require('chai');
 const Anywhere = require ('../lib/Anywhere').default;
+const { trackForks, exited } = require('./support/processes');
 
 const { SQLA_CONNECTION } = process.env;
 
@@ -30,10 +31,13 @@ describe('Anywhere connection', function () {
 
     const cred = SQLA_CONNECTION.replace(/pwd=[^;]+;/, 'pwd=1;')
 
+    const forked = trackForks();
     const conn = new Anywhere(cred);
     await conn.connect()
       .then(unexpected)
       .catch(expectErr('Invalid user ID or password'))
+      .finally(forked.restore)
+    await exited(forked[0])
     await conn.disconnect()
       .then(unexpected)
       .catch(expectErr(DISCONNECTED))

@@ -3,7 +3,9 @@ import { ChildProcess, fork } from 'child_process';
 
 import AnywhereError from './AnywhereError';
 
-const { debug } = nsLog('stm-sa:connection');
+const { debug, error } = nsLog('stm-sa:connection');
+
+const DISCONNECTED = 'Process disconnected';
 
 export type ResultCallback = (err: any, result?: any) => void
 
@@ -14,14 +16,40 @@ interface MessagePayload {
   error: any
 }
 
+interface PendingRequest {
+  type: string
+  callback: ResultCallback
+}
+
 export default class AnywhereConnection {
 
   requestCount: number = 0;
   process?: ChildProcess | null;
+  private pending = new Map<number, PendingRequest>();
 
   async connect(params?: string): Promise<true> {
 
-    this.process = fork(`${__dirname}/anywhereProcess.js`);
+    // do not orphan the child of a previous connect
+    this.destroy();
+
+    const child = fork(`${__dirname}/anywhereProcess.js`);
+    this.process = child;
+
+    child.on('message', (payload: MessagePayload) => this.onMessage(payload));
+
+    // the child has died or can't be talked to: nobody is going to answer pending requests
+    const onGone = (reason: any) => {
+      if (this.process !== child) {
+        // destroyed on purpose
+        return;
+      }
+      error('process gone', reason);
+      this.destroy();
+    };
+
+    child.on('error', onGone);
+    child.once('disconnect', () => onGone('disconnect'));
+    child.once('exit', (code, signal) => onGone(`exit ${signal || code}`));
 
     return new Promise<true>((resolve, reject) => {
       this.send('MSG_CONNECT', params, err => {
@@ -40,46 +68,69 @@ export default class AnywhereConnection {
 
     this.requestCount += 1;
 
-    if (!this.process) {
-      callback(new AnywhereError({ text: 'Process disconnected' }), null);
+    const { process: child, requestCount: requestId } = this;
+
+    if (!child) {
+      callback(new AnywhereError({ text: DISCONNECTED }), null);
       return;
     }
 
-    const { requestCount: requestId } = this;
+    this.pending.set(requestId, { type, callback });
 
-    const onMessage = (payload: MessagePayload) => {
-
-      if (payload.id !== requestId) {
-        return;
-      }
-
-      this.process?.removeListener('message', onMessage);
-
-      const { type: responseType, result, error } = payload;
-
-      debug(responseType || type, requestId, error ? 'error' : 'success');
-
-      if (error) {
-        callback(new AnywhereError(error), result);
-      } else {
-        callback(null, result);
-      }
-
-    };
-
-    this.process.on('message', onMessage);
-
-    this.process.send({
+    child.send({
       type,
       params,
       requestId,
+    }, err => {
+      if (err && this.pending.delete(requestId)) {
+        debug(type, requestId, err.message);
+        callback(new AnywhereError({ text: DISCONNECTED }), null);
+      }
     });
 
   }
 
+  private onMessage(payload: MessagePayload) {
+
+    const { id: requestId, type: responseType, result, error: err } = payload;
+    const request = this.pending.get(requestId);
+
+    if (!request) {
+      return;
+    }
+
+    this.pending.delete(requestId);
+
+    debug(responseType || request.type, requestId, err ? 'error' : 'success');
+
+    if (err) {
+      request.callback(new AnywhereError(err), result);
+    } else {
+      request.callback(null, result);
+    }
+
+  }
+
   destroy() {
-    this.process?.disconnect();
+
+    const { process: child } = this;
     this.process = null;
+
+    if (child) {
+      if (child.connected) {
+        child.disconnect();
+      }
+      // the child exits on disconnect by itself, this is for one which is stuck
+      if (child.exitCode === null && child.signalCode === null) {
+        child.kill();
+      }
+    }
+
+    const pending = Array.from(this.pending.values());
+    this.pending.clear();
+
+    pending.forEach(({ callback }) => callback(new AnywhereError({ text: DISCONNECTED }), null));
+
   }
 
   disconnect(callback: ResultCallback) {

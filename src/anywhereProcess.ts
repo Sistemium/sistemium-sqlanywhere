@@ -15,6 +15,8 @@ const MSG_PREPARE = 'MSG_PREPARE';
 const MSG_DROP_PREPARED = 'MSG_DROP_PREPARED';
 const MSG_EXEC_PREPARED = 'MSG_EXEC_PREPARED';
 
+const KILLER_TIMEOUT = 5000;
+
 let connectedAt: Date | null;
 const { debug } = log('stm-sa:process');
 
@@ -183,9 +185,20 @@ process.on('message', ({ type, requestId, params }: { type: string, requestId: n
 
 function errorHandling() {
 
+  let exiting = false;
+
   function killer() {
 
+    if (exiting) {
+      return;
+    }
+
+    exiting = true;
+
     debug('killer', 'conn name:', conn.name || 'unnamed');
+
+    // a disconnect from an unreachable server or behind a running query may take forever
+    setTimeout(() => process.exit(1), KILLER_TIMEOUT);
 
     if (connectedAt) {
       conn.disconnect(() => {
@@ -205,7 +218,8 @@ function errorHandling() {
     debug('exit');
   });
 
-  // process.on('disconnect', killer);
+  // the parent has closed the channel or died, so there is nobody to serve
+  process.on('disconnect', killer);
   process.on('SIGINT', killer);
   process.on('SIGTERM', killer);
 
