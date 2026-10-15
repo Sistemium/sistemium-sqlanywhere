@@ -126,8 +126,10 @@ describe('Anywhere child process lifecycle', function () {
 
     this.timeout(5000);
 
+    // debug output goes to stdout and would be read instead of the pid
     const parent = spawn(process.execPath, [BUSY_PARENT], {
       stdio: ['ignore', 'pipe', 'inherit'],
+      env: { ...process.env, DEBUG: '' },
     });
 
     const childPid = await new Promise((resolve, reject) => {
@@ -140,6 +142,7 @@ describe('Anywhere child process lifecycle', function () {
       parent.kill('SIGKILL');
       await pidExited(childPid);
     } finally {
+      parent.kill('SIGKILL');
       if (isAlive(childPid)) {
         process.kill(childPid, 'SIGKILL');
       }

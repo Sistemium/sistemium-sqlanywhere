@@ -13,6 +13,9 @@ const sqlPrepare = 'declare local temporary table #test (id int, name text)';
 
 describe('Anywhere connection', function () {
 
+  // every request is a round trip to a real server
+  this.timeout(10000);
+
   it('should connect and disconnect', async function () {
 
     assert(SQLA_CONNECTION, 'SQLA_CONNECTION env var must be set');
