@@ -7,9 +7,12 @@
     "lib"
   ],
   "scripts": {
+    "build": "rm -rf lib && tsc",
+    "prepack": "npm run build",
     "coverage": "nyc npm run test",
     "watch": "tsc-watch",
     "lint": "eslint .",
+    "pretest": "npm run build",
     "test": "mocha -r dotenv-flow/config"
   },
   "repository": {
