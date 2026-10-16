@@ -1,6 +1,6 @@
 {
   "name": "sistemium-sqlanywhere",
-  "version": "1.4.3",
+  "version": "2.0.0",
   "description": "SqlAnywhere async",
   "main": "lib/Anywhere.js",
   "files": [
@@ -25,9 +25,12 @@
     "url": "https://github.com/Sistemium/sistemium-sqlanywhere/issues"
   },
   "homepage": "https://github.com/Sistemium/sistemium-sqlanywhere#readme",
+  "engines": {
+    "node": ">=18"
+  },
   "dependencies": {
     "sistemium-debug": "^1.1.3",
-    "sqlanywhere": "^1.0.27"
+    "sqlanywhere": "github:Sistemium/node-sqlanywhere#f1d55ee3b9f0d9d533eae076431112a525cf1ffe"
   },
   "devDependencies": {
     "@types/node": "^20.9.4",

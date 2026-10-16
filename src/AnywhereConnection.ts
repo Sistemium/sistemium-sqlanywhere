@@ -32,7 +32,8 @@ export default class AnywhereConnection {
     // do not orphan the child of a previous connect
     this.destroy();
 
-    const child = fork(`${__dirname}/anywhereProcess.js`);
+    // structured clone instead of JSON keeps the types of results, e.g. Buffers of binary columns
+    const child = fork(`${__dirname}/anywhereProcess.js`, [], { serialization: 'advanced' });
     this.process = child;
 
     child.on('message', (payload: MessagePayload) => this.onMessage(payload));
@@ -150,7 +151,7 @@ export default class AnywhereConnection {
   }
 
   execPrepared(preparedId: number, values: any[], callback: ResultCallback) {
-    this.send('MSG_EXEC_PREPARED', { preparedId, values }, callback);
+    this.send('MSG_EXEC_PREPARED', { preparedId, values: bindValues(values) }, callback);
   }
 
   commit(callback: ResultCallback) {
@@ -162,8 +163,32 @@ export default class AnywhereConnection {
   }
 
   exec(sql: string, values: any[], callback: ResultCallback) {
-    const params = { sql, values };
+    const params = { sql, values: bindValues(values) };
     this.send('MSG_EXECUTE', params, callback);
   }
 
+}
+
+/**
+ * The driver binds only numbers, strings, Buffers and nulls.
+ * JSON serialization used to turn undefined and NaN into null and Dates into strings,
+ * so it is done here as the advanced serialization passes them as they are
+ */
+
+function bindValues(values: any[]): any[] {
+  return Array.isArray(values) ? values.map(toBindValue) : values;
+}
+
+function toBindValue(value: any): any {
+  if (Array.isArray(value)) {
+    // a row of a wide statement
+    return value.map(toBindValue);
+  }
+  if (value === undefined || (typeof value === 'number' && !Number.isFinite(value))) {
+    return null;
+  }
+  if (value && typeof value.toJSON === 'function' && !Buffer.isBuffer(value)) {
+    return value.toJSON();
+  }
+  return value;
 }

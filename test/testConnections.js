@@ -112,6 +112,53 @@ describe('Anywhere connection', function () {
 
   });
 
+  it('should keep the types of values', async function () {
+
+    const conn = new Anywhere(SQLA_CONNECTION);
+    await conn.connect();
+
+    try {
+
+      await conn.execImmediate('declare local temporary table #types'
+        + ' (bin long binary, num double, str text, nul int, dt varchar(30))');
+
+      const bytes = Buffer.from([0, 1, 127, 128, 255]);
+      const date = new Date('2024-02-03T04:05:06.789Z');
+      await conn.execImmediate('insert into #types values (?, ?, ?, ?, ?)', [
+        bytes, 1.5, 'text', undefined, date,
+      ]);
+
+      const [row] = await conn.execImmediate('select * from #types');
+      expect(Buffer.isBuffer(row.bin)).equals(true, 'binary must be a Buffer');
+      expect(row.bin.equals(bytes)).equals(true);
+      expect(row).to.include({
+        num: 1.5, str: 'text', nul: null, dt: date.toJSON(),
+      });
+
+    } finally {
+      await conn.disconnect();
+    }
+
+  });
+
+  it('should insert several rows with nulls', async function () {
+
+    const conn = new Anywhere(SQLA_CONNECTION);
+    await conn.connect();
+    conn.autoCommit = false;
+
+    try {
+      await conn.execImmediate(sqlPrepare);
+      const p = await conn.prepare(sqlInsert);
+      await conn.exec(p, [[1, 'one'], [2, null], [3, undefined]]);
+      const rows = await conn.execImmediate('select id, name from #test order by id');
+      expect(rows).eql([{ id: 1, name: 'one' }, { id: 2, name: null }, { id: 3, name: null }]);
+    } finally {
+      await conn.disconnect();
+    }
+
+  });
+
   it('should throw', async function () {
 
     const conn = new Anywhere(SQLA_CONNECTION);
