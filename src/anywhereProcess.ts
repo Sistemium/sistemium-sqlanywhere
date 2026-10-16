@@ -1,5 +1,5 @@
 import { nsLog as log } from 'sistemium-debug';
-// @ts-ignore
+// @ts-expect-error -- the driver has no type declarations
 import sqlanywhere from 'sqlanywhere';
 
 const conn = sqlanywhere.createConnection();
@@ -20,7 +20,7 @@ const KILLER_TIMEOUT = 5000;
 let connectedAt: Date | null;
 const { debug } = log('stm-sa:process');
 
-type ResultCallback = (err: any, result: any) => void
+type ResultCallback = (err: any, result: any) => void;
 
 interface PreparedStatement {
   exec(values: any[], cb: ResultCallback): void
@@ -40,7 +40,7 @@ function parseError(saError: { toString(): string }) {
       code,
       text,
     };
-  } catch (e) {
+  } catch {
     return {
       code: '',
       text: err,
@@ -95,7 +95,10 @@ function execute(id: number, { sql, values }: { sql: string, values: any[] }) {
 
 }
 
-function executePrepared(id: number, { preparedId, values }: { preparedId: number, values: any[] }) {
+function executePrepared(
+  id: number,
+  { preparedId, values }: { preparedId: number, values: any[] },
+) {
 
   const prepared = PREPARED_MAP.get(preparedId);
 

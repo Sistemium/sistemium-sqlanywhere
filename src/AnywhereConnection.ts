@@ -7,7 +7,7 @@ const { debug, error } = nsLog('stm-sa:connection');
 
 const DISCONNECTED = 'Process disconnected';
 
-export type ResultCallback = (err: any, result?: any) => void
+export type ResultCallback = (err: any, result?: any) => void;
 
 interface MessagePayload {
   id: number
