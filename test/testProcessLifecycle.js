@@ -122,6 +122,31 @@ describe('Anywhere child process lifecycle', function () {
 
   });
 
+  it('should kill the child process which cannot exit behind a running query', async function () {
+
+    // the child gives the query KILLER_TIMEOUT to end
+    this.timeout(10000);
+
+    const conn = new Anywhere('host=fake');
+    await conn.connect();
+
+    const query = conn.execImmediate('block')
+      .then(unexpected)
+      .catch(expectErr(DISCONNECTED));
+
+    // let the child start the query, then replace it
+    await new Promise(resolve => setTimeout(resolve, 200));
+    await conn.connect();
+    await query;
+
+    await exited(forked[0], 7000);
+    expect(forked[0].signalCode).equals('SIGKILL');
+
+    await conn.disconnect();
+    await exited(forked[1]);
+
+  });
+
   it('should exit the child process when the parent dies', async function () {
 
     this.timeout(5000);

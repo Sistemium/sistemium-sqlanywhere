@@ -200,8 +200,12 @@ function errorHandling() {
 
     debug('killer', 'conn name:', conn.name || 'unnamed');
 
-    // a disconnect from an unreachable server or behind a running query may take forever
-    setTimeout(() => process.exit(1), KILLER_TIMEOUT);
+    // a disconnect from an unreachable server or behind a running query may take forever,
+    // and so would process.exit(), which waits for the driver's threads to finish their work
+    setTimeout(() => {
+      debug('killer', 'timeout');
+      process.kill(process.pid, 'SIGKILL');
+    }, KILLER_TIMEOUT);
 
     if (connectedAt) {
       conn.disconnect(() => {
